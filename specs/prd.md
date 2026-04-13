@@ -108,6 +108,7 @@ The operator views a paginated list of all customers with their current number o
 - **No future-stage concepts:** No genres, no search, no customer history, no copy management, no roles, no auth, no notifications, no images, no trailers.
 - **Technology:** Clipper 5.2. `.dbf` files for all persistent storage. Text UI (`@ROW,COL SAY/GET`). DOSBox environment.
 - **Paradigm:** Strictly procedural. No objects, no events, no separation of concerns beyond what Clipper's procedural structure naturally provides.
+- **DOS forms** All operator interactions happen through full-screen DOS forms with drawn borders, labeled fields, and OK/Cancel confirmation where appropriate. No single-line prompt inputs.
 
 ---
 
