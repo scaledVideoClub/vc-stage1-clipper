@@ -21,6 +21,21 @@ The system tracks which movies are currently rented and which are on the shelf. 
 
 ## 3. Core Flows
 
+### Flow 0 — Main menu
+
+On startup, the system displays the "VIDEO CLUB" ASCII logo and the main menu. The operator navigates by pressing the corresponding letter. All other flows are invoked from here and return to the menu on completion.
+
+    R. Rent a movie
+    D. Return a movie
+    ─────────────────────
+    C. New customer
+    L. Customer list
+    ─────────────────────
+    M. Available movies
+    N. New movie
+    ─────────────────────
+    X. Exit
+
 ### Flow 1 — Register a customer
 
 The operator creates a new customer record: name and a system-assigned ID. No history, no contact info, no balance. The customer is now a record the system can link rentals to.
@@ -47,6 +62,14 @@ The operator:
 
 The operator displays a paginated list of all movies currently on the shelf (not rented out). Used to recommend titles to customers and to look up catalog IDs. No filters, no sort controls.
 
+### Flow 5 — Customer list
+
+The operator views a paginated list of all customers with their current number of active rentals. No history, no detail of which movies they hold.
+
+    ID   NAME                ACTIVE
+    001  García, Juan        2
+    002  Martínez, Ana       0
+
 ---
 
 ## 4. Business Rules
@@ -62,7 +85,7 @@ The operator displays a paginated list of all movies currently on the shelf (not
 | Fee display | The system shows the fee. No payment recording in Stage 1. |
 | Customer ID | System-assigned numeric ID. Operator reads it from a printed or noted customer card. |
 | Duplicate rentals | A movie that is currently rented cannot be rented again until returned. |
-| Customer rentals | A customer can have multiple active rentals simultaneously. No limit in Stage 1. |
+| Customer rentals | A customer cannot hold more than `MAX_RENTALS` active rentals simultaneously. |
 
 ---
 
@@ -75,7 +98,7 @@ The operator displays a paginated list of all movies currently on the shelf (not
 - **Same-day return:** Return on the due date is not late. Fee = 0.
 - **No movies available:** The availability list is empty → system shows an appropriate message instead of an empty list.
 - **Config file missing:** System falls back to hardcoded defaults and warns the operator on startup.
-
+- **Customer at limit:** Operator attempts to rent to a customer who already holds `MAX_RENTALS` active rentals → system shows "rental limit reached" and returns to menu.
 ---
 
 ## 6. Constraints (Stage 1 specific)
@@ -96,6 +119,7 @@ Business parameters are defined in `VIDEOCLUB.CFG`, a plain-text key-value file 
 RENTAL_DAYS=3
 DAILY_RATE=2.00
 LATE_FEE_DAILY=1.00
+MAX_RENTALS=3
 ```
 
 | Key | Type | Default | Meaning |
