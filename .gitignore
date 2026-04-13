@@ -1,0 +1,10 @@
+# Compiled output
+build/
+ 
+# Runtime data
+DATA/
+ 
+# Clipper intermediate files
+*.OBJ
+*.MAP
+*.ERR

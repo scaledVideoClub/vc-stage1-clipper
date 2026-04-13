@@ -70,6 +70,15 @@ The operator views a paginated list of all customers with their current number o
     001  García, Juan        2
     002  Martínez, Ana       0
 
+### Flow 6 — Add a movie to the catalog
+
+The operator adds a new movie to the system:
+
+1. Enters the movie title
+2. The system assigns the next available catalog ID
+3. The movie is saved as available (no active rental)
+4. The system displays the assigned catalog ID so the operator can label the physical cassette
+
 ---
 
 ## 4. Business Rules
@@ -146,7 +155,7 @@ The following are explicitly deferred to later stages:
 | Movie listings with filters | 3 |
 | Payment recording | 6 |
 | User roles / auth | 6 |
-
+| Edit or delete a movie | — |
 ---
 
 *Stage 1 PRD v1.0 — initial*
