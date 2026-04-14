@@ -1,0 +1,16 @@
+366K available
+Compiling VCLUB.PRG
+VCLUB.PRG(37)  Warning C1004  Ambiguous reference, assuming memvar: 'NRENTALDAYS'
+VCLUB.PRG(38)  Warning C1004  Ambiguous reference, assuming memvar: 'NDAILYRATE'
+VCLUB.PRG(39)  Warning C1004  Ambiguous reference, assuming memvar: 'NLATEFEEDAILY'
+VCLUB.PRG(40)  Warning C1004  Ambiguous reference, assuming memvar: 'NMAXRENTALS'
+VCLUB.PRG(115) Warning C1004  Ambiguous reference, assuming memvar: 'NRENTALDAYS'
+VCLUB.PRG(117) Warning C1004  Ambiguous reference, assuming memvar: 'NDAILYRATE'
+VCLUB.PRG(119) Warning C1004  Ambiguous reference, assuming memvar: 'NLATEFEEDAILY'
+VCLUB.PRG(121) Warning C1004  Ambiguous reference, assuming memvar: 'NMAXRENTALS'
+VCLUB.PRG(213) Warning C1003  Ambiguous reference: 'NRENTALDAYS'
+VCLUB.PRG(214) Warning C1003  Ambiguous reference: 'NDAILYRATE'
+VCLUB.PRG(215) Warning C1003  Ambiguous reference: 'NLATEFEEDAILY'
+VCLUB.PRG(216) Warning C1003  Ambiguous reference: 'NMAXRENTALS'
+12 warnings                
+Code size 2227, Symbols 560, Constants 1837
