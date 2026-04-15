@@ -323,9 +323,64 @@ PROCEDURE ReturnMovie()
    INKEY(0)
 RETURN
 
+
+* ───────────────────────────────────────────────────────────────────────
+*  Add a new customer 
+* ───────────────────────────────────────────────────────────────────────
 PROCEDURE NewCustomer()
-   @ 22, 1 SAY "[STUB] NewCustomer - not yet implemented. Press any key."
+LOCAL cTitle
+   LOCAL nNewId
+   LOCAL nArea
+   LOCAL GETLIST
+   
+   GETLIST := {}
+   nArea := SELECT()
+
+   CLEARSCREEN()
+   @ 0, 0 SAY PADC(APP_TITLE, 80)
+   @ 3, 2, 10, 60 BOX DBLBOX
+   @ 4, 4 SAY "NEW CUSTOMER"
+   @ 5, 3 SAY REPLICATE(HRULE, 57)
+   @ 7, 4 SAY "Name: "
+   @ 24, 1 SAY "[Enter] Confirm   [Esc] Cancel"
+
+   cName := SPACE(60)
+   @ 7, 11 GET M->cName PICT "@S48"
+   READ
+
+   * LASTKEY() == 27 significa que el usuario presionó Esc durante el GET
+   IF LASTKEY() == 27
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   cName := ALLTRIM(M->cName)
+
+   IF LEN(M->cName) = 0
+      @ 22, 1 SAY "This field cannot be empty. Press any key."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   * Auto-increment: MAX + 1, con fallback a 1 si la tabla está vacía
+   SELECT CUSTOMERS
+   GO BOTTOM
+   IF EOF() .OR. BOF()
+      nNewId := 1
+   ELSE
+      nNewId := CUSTOMERS->ID + 1
+   ENDIF
+
+   APPEND BLANK
+   REPLACE CUSTOMERS->ID  WITH nNewId, ;
+           CUSTOMERS->NAME WITH M->cName ;
+
+
+   @ 22, 1 SAY "Customer "+ LTRIM(M->cName) + "added. Member ID: " + LTRIM(STR(nNewId)) + "   "
    INKEY(0)
+
+   SELECT (nArea)
 RETURN
 
 * ───────────────────────────────────────────────────────────────────────
@@ -405,7 +460,6 @@ RETURN
 * ───────────────────────────────────────────────────────────────────────
 
 PROCEDURE AvailableMovies()
-
    LOCAL aList
    LOCAL nTotal, nPage, nPages, nFrom, nTo, nRow
    LOCAL i, cKey, nArea
@@ -475,11 +529,71 @@ PROCEDURE AvailableMovies()
 
 RETURN
 
+* ───────────────────────────────────────────────────────────────────────
+* Add new movie
+* ───────────────────────────────────────────────────────────────────────
 PROCEDURE NewMovie()
-   @ 22, 1 SAY "[STUB] NewMovie - not yet implemented. Press any key."
+
+   LOCAL cTitle
+   LOCAL nNewId
+   LOCAL nArea
+   LOCAL GETLIST
+
+   GETLIST := {}
+   nArea := SELECT()
+
+   CLEARSCREEN()
+   @ 0, 0 SAY PADC(APP_TITLE, 80)
+   @ 3, 2, 10, 60 BOX DBLBOX
+   @ 4, 4 SAY "NEW MOVIE"
+   @ 5, 3 SAY REPLICATE(HRULE, 57)
+   @ 7, 4 SAY "Title: "
+   @ 24, 1 SAY "[Enter] Confirm   [Esc] Cancel"
+
+   cTitle := SPACE(60)
+   @ 7, 11 GET cTitle PICT "@S48"
+   READ
+
+   * LASTKEY() == 27 significa que el usuario presionó Esc durante el GET
+   IF LASTKEY() == 27
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   cTitle := ALLTRIM(cTitle)
+
+   IF LEN(cTitle) = 0
+      @ 22, 1 SAY "This field cannot be empty. Press any key."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   * Auto-increment: MAX + 1, con fallback a 1 si la tabla está vacía
+   SELECT MOVIES
+   GO BOTTOM
+   IF EOF() .OR. BOF()
+      nNewId := 1
+   ELSE
+      nNewId := MOVIES->ID + 1
+   ENDIF
+
+   APPEND BLANK
+   REPLACE MOVIES->ID  WITH nNewId, ;
+           MOVIES->TITLE     WITH cTitle, ;
+           MOVIES->RENTED_TO WITH 0, ;
+           MOVIES->RENTED_ON WITH CTOD("  /  /  ")
+
+   @ 22, 1 SAY "Movie added. Catalog ID: " + LTRIM(STR(nNewId)) + "   "
    INKEY(0)
+
+   SELECT (nArea)
+
 RETURN
 
+* ───────────────────────────────────────────────────────────────────────
+* Clean screen by writing empty lines
+* ───────────────────────────────────────────────────────────────────────
 PROCEDURE CLEARSCREEN()
    LOCAL i 
    FOR i := 0 TO 24
