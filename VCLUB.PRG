@@ -24,7 +24,7 @@
 
 #define APP_TITLE  " SCALED VIDEO CLUB  //  Rental Management System "
 #define DATA_PATH  "DATA\"
-#define CFG_FILE   "VIDEOCLUB.CFG"
+#define CFG_FILE   "VCLUB.CFG"
 
 * ═══════════════════════════════════════════════════════════════════════
 * Global configuration variables
@@ -54,7 +54,7 @@ PROCEDURE MAIN
    SET CONFIRM    OFF
    SET WRAP       OFF
 
-   PUBLIC nRentalDays, nDailyRate, nLateFeeDaily, nMaxRentals
+   PUBLIC nRentalDaysDays, nDailyRate, nLateFeeDaily,nMaxRentals
 
    CLEARSCREEN()
 
@@ -109,13 +109,13 @@ PROCEDURE LoadConfig()
 
                DO CASE
                CASE cKey == "RENTAL_DAYS"
-                  nRentalDays   := VAL(cVal)
+                  M->nRentalDaysDays   := VAL(cVal)
                CASE cKey == "DAILY_RATE"
-                  nDailyRate    := VAL(cVal)
+                  M->nDailyRate    := VAL(cVal)
                CASE cKey == "LATE_FEE_DAILY"
-                  nLateFeeDaily := VAL(cVal)
+                  M->nLateFeeDaily := VAL(cVal)
                CASE cKey == "MAX_RENTALS"
-                  nMaxRentals   := VAL(cVal)
+                  M->nMaxRentals   := VAL(cVal)
                ENDCASE
             ENDIF
          ENDIF
@@ -134,10 +134,10 @@ RETURN
 * ───────────────────────────────────────────────────────────────────────
 
 PROCEDURE InitGlobals
-   nRentalDays   = 3
-   nDailyRate    = 2.00
-   nLateFeeDaily = 1.00
-   nMaxRentals   = 3
+   M->nRentalDaysDays   = 3
+   M->nDailyRate    = 2.00
+   M->nLateFeeDaily = 1.00
+   M->nMaxRentals   = 3
 RETURN
 
 
@@ -220,10 +220,10 @@ PROCEDURE ShowLogo()
 
    * Config summary — operator can confirm loaded settings at a glance
    @ 13, 4 SAY "Date: " + DTOC(DATE())
-   @ 14, 4 SAY "Rental period: " + LTRIM(STR(nRentalDays)) + " days"
-   @ 15, 4 SAY "Rate: $" + LTRIM(STR(nDailyRate, 6, 2)) + "/day"
-   @ 16, 4 SAY "Late: $" + LTRIM(STR(nLateFeeDaily, 6, 2)) + "/day"
-   @ 17, 4 SAY "Max rentals per customer: " + LTRIM(STR(nMaxRentals))
+   @ 14, 4 SAY "Rental period: " + LTRIM(STR(M->nRentalDaysDays)) + " days"
+   @ 15, 4 SAY "Rate: $" + LTRIM(STR(M->nDailyRate, 6, 2)) + "/day"
+   @ 16, 4 SAY "Late: $" + LTRIM(STR(M->nLateFeeDaily, 6, 2)) + "/day"
+   @ 17, 4 SAY "Max rentals per customer: " + LTRIM(STR(M->nMaxRentals))
 
    @ 22, 25 SAY "Press any key to continue..."
 
@@ -328,14 +328,151 @@ PROCEDURE NewCustomer()
    INKEY(0)
 RETURN
 
+* ───────────────────────────────────────────────────────────────────────
+* Clients/Customers Listing
+*  Present a listing of clients 
+* ───────────────────────────────────────────────────────────────────────
 PROCEDURE CustomerList()
-   @ 22, 1 SAY "[STUB] CustomerList - not yet implemented. Press any key."
-   INKEY(0)
+   LOCAL aList
+   LOCAL nTotal, nPage, nPages, nFrom, nTo, nRow
+   LOCAL i, cKey, nArea
+   LOCAL PAGE_SIZE
+   PAGE_SIZE := 15
+
+   nArea := SELECT()
+
+   aList := {}
+   SELECT CUSTOMERS
+   GO TOP
+   DO WHILE .NOT. EOF()
+      AADD(aList, {CUSTOMERS->ID, ALLTRIM(CUSTOMERS->NAME)})
+      SKIP
+   ENDDO
+
+   IF LEN(aList) = 0
+      @ 22, 1 SAY "No customers ovies available.                "
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   nTotal := LEN(aList)
+   nPages := INT((nTotal - 1) / PAGE_SIZE) + 1
+   nPage  := 1
+
+   DO WHILE .T.
+      CLEARSCREEN()
+      @ 0, 0 SAY PADC(APP_TITLE, 80)
+      @ 1, 2 SAY "CUSTOMERS     "
+      @ 2, 2 SAY REPLICATE(HRULE, 76)
+      @ 3, 4 SAY "  ID    Name "
+      @ 4, 2 SAY REPLICATE(HRULE, 76)
+
+      nFrom := (nPage - 1) * PAGE_SIZE + 1
+      nTo   := MIN(nPage * PAGE_SIZE, nTotal)
+
+      FOR i := nFrom TO nTo
+         nRow := 4 + (i - nFrom + 1)
+         @ nRow, 4 SAY STR(aList[i][1], 5) + "   " + aList[i][2]
+      NEXT
+
+      @ 20, 2 SAY REPLICATE(HRULE, 76)
+      @ 21, 4 SAY "Page " + LTRIM(STR(nPage)) + " of " + LTRIM(STR(nPages)) + ;
+                  "   (" + LTRIM(STR(nTotal)) + " available)"
+      @ 24, 1 SAY "[N] Next   [P] Prev   [Esc] Back to menu"
+
+      cKey := UPPER(CHR(INKEY(0)))
+      DO CASE
+      CASE cKey == "N"
+         IF nPage < nPages
+            nPage := nPage + 1
+         ENDIF
+      CASE cKey == "P"
+         IF nPage > 1
+            nPage := nPage - 1
+         ENDIF
+      CASE ASC(cKey) == 27
+         EXIT
+      ENDCASE
+   ENDDO
+
+   SELECT (nArea)
 RETURN
 
+* ───────────────────────────────────────────────────────────────────────
+* Available movies
+*  Present a listing of movies available to rent.
+* ───────────────────────────────────────────────────────────────────────
+
 PROCEDURE AvailableMovies()
-   @ 22, 1 SAY "[STUB] AvailableMovies - not yet implemented. Press any key."
-   INKEY(0)
+
+   LOCAL aList
+   LOCAL nTotal, nPage, nPages, nFrom, nTo, nRow
+   LOCAL i, cKey, nArea
+   LOCAL PAGE_SIZE
+   PAGE_SIZE := 15
+
+   nArea := SELECT()
+
+   aList := {}
+   SELECT MOVIES
+   GO TOP
+   DO WHILE .NOT. EOF()
+      IF EMPTY(MOVIES->RENTED_ON)
+         AADD(aList, {MOVIES->ID, ALLTRIM(MOVIES->TITLE)})
+      ENDIF
+      SKIP
+   ENDDO
+
+   IF LEN(aList) = 0
+      @ 22, 1 SAY "No movies available.                    "
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   nTotal := LEN(aList)
+   nPages := INT((nTotal - 1) / PAGE_SIZE) + 1
+   nPage  := 1
+
+   DO WHILE .T.
+      CLEARSCREEN()
+      @ 0, 0 SAY PADC(APP_TITLE, 80)
+      @ 1, 2 SAY "AVAILABLE MOVIES"
+      @ 2, 2 SAY REPLICATE(HRULE, 76)
+      @ 3, 4 SAY "  ID    Title"
+      @ 4, 2 SAY REPLICATE(HRULE, 76)
+
+      nFrom := (nPage - 1) * PAGE_SIZE + 1
+      nTo   := MIN(nPage * PAGE_SIZE, nTotal)
+
+      FOR i := nFrom TO nTo
+         nRow := 4 + (i - nFrom + 1)
+         @ nRow, 4 SAY STR(aList[i][1], 5) + "   " + aList[i][2]
+      NEXT
+
+      @ 20, 2 SAY REPLICATE(HRULE, 76)
+      @ 21, 4 SAY "Page " + LTRIM(STR(nPage)) + " of " + LTRIM(STR(nPages)) + ;
+                  "   (" + LTRIM(STR(nTotal)) + " available)"
+      @ 24, 1 SAY "[N] Next   [P] Prev   [Esc] Back to menu"
+
+      cKey := UPPER(CHR(INKEY(0)))
+      DO CASE
+      CASE cKey == "N"
+         IF nPage < nPages
+            nPage := nPage + 1
+         ENDIF
+      CASE cKey == "P"
+         IF nPage > 1
+            nPage := nPage - 1
+         ENDIF
+      CASE ASC(cKey) == 27
+         EXIT
+      ENDCASE
+   ENDDO
+
+   SELECT (nArea)
+
 RETURN
 
 PROCEDURE NewMovie()
