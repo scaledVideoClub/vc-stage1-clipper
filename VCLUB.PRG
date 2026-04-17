@@ -233,7 +233,7 @@ RETURN
 
 
 * ───────────────────────────────────────────────────────────────────────
-* DrawMenu
+* Flow 0 : DrawMenu
 *
 * Renders the main menu screen. Called at the start of each
 * MenuLoop iteration so the screen is always clean on return.
@@ -298,6 +298,7 @@ PROCEDURE MenuLoop()
       CASE cKey == "N"
          NewMovie()
       CASE cKey == "X"
+         CLOSE ALL
          lExit := .T.
       ENDCASE
 
@@ -306,32 +307,228 @@ PROCEDURE MenuLoop()
 RETURN
 
 
-* ═══════════════════════════════════════════════════════════════════════
-* FLOW STUBS
-* Placeholder procedures for flows not yet implemented.
-* Each displays a [STUB] notice and waits for a keypress.
-* Replace body-by-body in subsequent sessions.
-* ═══════════════════════════════════════════════════════════════════════
+
+
+* ───────────────────────────────────────────────────────────────────────
+* ### Flow 2 — Rent a movie
+*   The operator:
+*   1. Enters the catalog ID of the movie (read from the physical cassette's label)
+*  2. Enters the customer ID
+*  3. The system verifies the movie is available (stock = 1 unit, currently in)
+*  4. The system records the rental: movie, customer, start date, due date
+*  5. The movie is marked as rented (unavailable)
+* ───────────────────────────────────────────────────────────────────────
 
 PROCEDURE RentMovie()
-   @ 22, 1 SAY "[STUB] RentMovie - not yet implemented. Press any key."
-   INKEY(0)
-RETURN
 
-PROCEDURE ReturnMovie()
-   @ 22, 1 SAY "[STUB] ReturnMovie - not yet implemented. Press any key."
+    LOCAL nMovieID
+    LOCAL nCLientID
+    LOCAL GETLIST
+    LOCAL cMovieName
+    LOCAL cClientName
+    LOCAL nArea 
+    
+    GETLIST := {}
+    nArea := SELECT()
+
+   CLEARSCREEN()
+   @ 0, 0 SAY PADC(APP_TITLE, 80)
+   @ 3, 2, 10, 60 BOX DBLBOX
+   @ 4, 4 SAY "RENT A MOVIE"
+   @ 5, 3 SAY REPLICATE(HRULE, 57)
+   @ 7, 4 SAY "Client ID: "
+   @ 24, 1 SAY "[Enter] Confirm   [Esc] Cancel"
+
+   M->nCLientID := SPACE(3)
+   @ 7, 11 GET M->nCLientID PICT "@999"
+   READ
+
+   * LASTKEY() == 27 user pressed Esc while GET
+   IF LASTKEY() == 27
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   IF LEN(M->nCLientID) = 0
+      @ 22, 1 SAY "This field cannot be empty. Press any key."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   M->nCLientID  = VAL(M->nCLientID)
+   SELECT CUSTOMERS
+   SEEK M->nCLientID
+
+   IF !FOUND()
+      @ 22, 1 SAY "Customer doesn't exists. Press any key."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   M->cClientName := CUSTOMERS->Name 
+   
+   * find movie
+   CLEARSCREEN()
+   GETLIST := {}
+
+   @ 0, 0 SAY PADC(APP_TITLE, 80)
+   @ 3, 2, 10, 60 BOX DBLBOX
+   @ 4, 4 SAY "RENT A MOVIE"
+   @ 5, 3 SAY REPLICATE(HRULE, 57)
+   @ 7, 4 SAY "Movie ID: "
+   @ 24, 1 SAY "[Enter] Confirm   [Esc] Cancel"
+
+   @ 22, 1 SAY "Renting to customer: " + STR(M->nCLientID) + ": " + M->cClientName +"."
+
+   M->nMovieID := SPACE(3)
+   @ 7, 14 GET M->nMovieID PICT "@999"
+   READ
+
+   * LASTKEY() == 27 user pressed Esc while GET
+   IF LASTKEY() == 27
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   IF LEN(M->nMovieID) = 0
+      @ 22, 1 SAY "This field cannot be empty. Press any key."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   @ 23, 1 SAY "Movie ID entered: " + M->nMovieID + " - Press any key to continue..."
    INKEY(0)
+
+   M->nMovieID  = VAL(M->nMovieID)
+
+   SELECT MOVIES
+   GO TOP
+   SEEK M->nMovieID
+
+   IF !FOUND()
+      @ 22, 1 SAY "Movie doesn't exists. Press any key."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   M->nRentedTo = MOVIES->RENTED_TO
+   
+   IF M->nRentedTo != 0
+      @ 22, 1 SAY "Movie is already rented. Press any key."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   REPLACE MOVIES->RENTED_TO WITH M->nCLientID, ;
+           MOVIES->RENTED_ON WITH DATE() 
+
+   M->cMovieName := MOVIES->TITLE 
+   * @ 22, 1 SAY M->cMovieName + "has been rented'. Press any key."
+   INKEY(0)
+
+
+
 RETURN
 
 
 * ───────────────────────────────────────────────────────────────────────
-*  Add a new customer 
+* ### Flow 3 — Return a movie
+*
+* The operator:
+* 1. Enters the catalog ID of the movie being returned
+* 2. The system finds the active rental for that movie
+* ...
+* ───────────────────────────────────────────────────────────────────────
+PROCEDURE ReturnMovie()
+    LOCAL nMovieID
+    LOCAL GETLIST
+    LOCAL cMovieName
+    LOCAL nArea 
+    
+    GETLIST := {}
+    nArea := SELECT()
+
+   CLEARSCREEN()
+
+   * 1. Enters the catalog ID of the movie being returned
+
+   @ 0, 0 SAY PADC(APP_TITLE, 80)
+   @ 3, 2, 10, 60 BOX DBLBOX
+   @ 4, 4 SAY "RETURN A MOVIE"
+   @ 5, 3 SAY REPLICATE(HRULE, 57)
+   @ 7, 4 SAY "Movie ID: "
+   @ 24, 1 SAY "[Enter] Confirm   [Esc] Cancel"
+
+   M->nMovieID := SPACE(4)
+   @ 7, 14 GET M->nMovieID PICT "@999"
+   READ
+
+   * LASTKEY() == 27 significa que el usuario presionó Esc durante el GET
+   IF LASTKEY() == 27
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   IF LEN(M->nMovieID) = 0
+      @ 22, 1 SAY "This field cannot be empty. Press any key."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   * 2. The system finds the active rental for that movie
+
+   M->nMovieID  := VAL(M->nMovieID)
+
+   SELECT MOVIES
+   SEEK M->nMovieID
+   IF !FOUND()
+      @ 22, 1 SAY "Movie doesn't exists. Press any key."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   M->nRentedTo = MOVIES->RENTED_TO
+   
+   IF M->nRentedTo = 0
+      @ 22, 1 SAY "Movie is not rented. Press any key."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF
+
+   * 3. The system calculates whether the return is late
+   * 4. If late: displays the fee owed (`days_overdue × daily_late_fee`). The operator reads this aloud — **the system does not record payment**
+
+   * 5. The movie is marked as available again. The rental is marked as closed.   
+   REPLACE MOVIES->RENTED_TO WITH 0, ;
+           MOVIES->RENTED_ON WITH CTOD("  /  /  ")
+
+   M->cMovieName := MOVIES->TITLE 
+   @ 22, 1 SAY M->cMovieName + "ha sido devuelta. Press any key."
+   INKEY(0)
+
+
+
+
+RETURN
+
+
+* ───────────────────────────────────────────────────────────────────────
+*  ### Flow 1 — Register a customer
 * ───────────────────────────────────────────────────────────────────────
 PROCEDURE NewCustomer()
-LOCAL cTitle
+
    LOCAL nNewId
    LOCAL nArea
    LOCAL GETLIST
+   LOCAL cName 
    
    GETLIST := {}
    nArea := SELECT()
@@ -344,7 +541,7 @@ LOCAL cTitle
    @ 7, 4 SAY "Name: "
    @ 24, 1 SAY "[Enter] Confirm   [Esc] Cancel"
 
-   cName := SPACE(60)
+   M->cName := SPACE(60)
    @ 7, 11 GET M->cName PICT "@S48"
    READ
 
@@ -373,39 +570,64 @@ LOCAL cTitle
    ENDIF
 
    APPEND BLANK
-   REPLACE CUSTOMERS->ID  WITH nNewId, ;
+   REPLACE CUSTOMERS->ID   WITH nNewId, ;
            CUSTOMERS->NAME WITH M->cName ;
 
 
-   @ 22, 1 SAY "Customer "+ LTRIM(M->cName) + "added. Member ID: " + LTRIM(STR(nNewId)) + "   "
+   @ 22, 1 SAY "Customer "+ ALLTRIM(M->cName) + "added. Member ID: " + LTRIM(STR(nNewId)) + "   "
    INKEY(0)
 
    SELECT (nArea)
 RETURN
 
+
+FUNCTION SeekRentalsFrom
+  PARAMETERS nCustID
+  
+  LOCAL nArea, nRentals 
+
+  nArea := SELECT()
+  nRentals := 0 
+  SELECT MOVIES
+  GO TOP
+  DO WHILE .NOT. EOF()
+     IF (MOVIES->RENTED_TO == nCustID)
+        nRentals := nRentals + 1
+     ENDIF 
+     SKIP 
+  ENDDO
+
+  SELECT (nArea) 
+
+RETURN nRentals
+
+
 * ───────────────────────────────────────────────────────────────────────
-* Clients/Customers Listing
-*  Present a listing of clients 
+*  ### Flow 5 — Customer list
+*  The operator views a paginated list of all customers with their 
+*  current number of active rentals.
 * ───────────────────────────────────────────────────────────────────────
 PROCEDURE CustomerList()
    LOCAL aList
-   LOCAL nTotal, nPage, nPages, nFrom, nTo, nRow
+   LOCAL nTotal, nPage, nPages, nFrom, nTo, nRow, nActiveRentals
    LOCAL i, cKey, nArea
    LOCAL PAGE_SIZE
    PAGE_SIZE := 15
 
    nArea := SELECT()
-
+   
    aList := {}
+ 
    SELECT CUSTOMERS
    GO TOP
    DO WHILE .NOT. EOF()
-      AADD(aList, {CUSTOMERS->ID, ALLTRIM(CUSTOMERS->NAME)})
+      nActiveRentals := SeekRentalsFrom(CUSTOMERS->ID)
+      AADD(aList, {CUSTOMERS->ID, ALLTRIM(CUSTOMERS->NAME), nActiveRentals})
       SKIP
    ENDDO
 
    IF LEN(aList) = 0
-      @ 22, 1 SAY "No customers ovies available.                "
+      @ 22, 1 SAY "No customers available.                "
       INKEY(0)
       SELECT (nArea)
       RETURN
@@ -414,13 +636,13 @@ PROCEDURE CustomerList()
    nTotal := LEN(aList)
    nPages := INT((nTotal - 1) / PAGE_SIZE) + 1
    nPage  := 1
-
+   
    DO WHILE .T.
       CLEARSCREEN()
       @ 0, 0 SAY PADC(APP_TITLE, 80)
       @ 1, 2 SAY "CUSTOMERS     "
       @ 2, 2 SAY REPLICATE(HRULE, 76)
-      @ 3, 4 SAY "  ID    Name "
+      @ 3, 4 SAY "  ID    Name                           Active Rentals "
       @ 4, 2 SAY REPLICATE(HRULE, 76)
 
       nFrom := (nPage - 1) * PAGE_SIZE + 1
@@ -428,7 +650,7 @@ PROCEDURE CustomerList()
 
       FOR i := nFrom TO nTo
          nRow := 4 + (i - nFrom + 1)
-         @ nRow, 4 SAY STR(aList[i][1], 5) + "   " + aList[i][2]
+         @ nRow, 4 SAY STR(aList[i][1], 5) + "   " + LEFT(aList[i][2]+SPACE(30), 30) + " " + STR(aList[i][3], 5)
       NEXT
 
       @ 20, 2 SAY REPLICATE(HRULE, 76)
@@ -530,7 +752,8 @@ PROCEDURE AvailableMovies()
 RETURN
 
 * ───────────────────────────────────────────────────────────────────────
-* Add new movie
+* ### Flow 6 — Add a movie to the catalog
+* The operator adds a new movie to the system
 * ───────────────────────────────────────────────────────────────────────
 PROCEDURE NewMovie()
 
