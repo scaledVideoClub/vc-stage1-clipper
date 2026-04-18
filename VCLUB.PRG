@@ -43,8 +43,6 @@
 
 PROCEDURE MAIN
 
-   ? "PUNTO 1"
-
    SET TALK       OFF
    SET SCOREBOARD OFF
    SET BELL       OFF
@@ -109,7 +107,7 @@ PROCEDURE LoadConfig()
 
                DO CASE
                CASE cKey == "RENTAL_DAYS"
-                  M->nRentalDaysDays   := VAL(cVal)
+                  M->nRentalDays   := VAL(cVal)
                CASE cKey == "DAILY_RATE"
                   M->nDailyRate    := VAL(cVal)
                CASE cKey == "LATE_FEE_DAILY"
@@ -134,7 +132,7 @@ RETURN
 * ───────────────────────────────────────────────────────────────────────
 
 PROCEDURE InitGlobals
-   M->nRentalDaysDays   = 3
+   M->nRentalDays   = 3
    M->nDailyRate    = 2.00
    M->nLateFeeDaily = 1.00
    M->nMaxRentals   = 3
@@ -220,7 +218,7 @@ PROCEDURE ShowLogo()
 
    * Config summary — operator can confirm loaded settings at a glance
    @ 13, 4 SAY "Date: " + DTOC(DATE())
-   @ 14, 4 SAY "Rental period: " + LTRIM(STR(M->nRentalDaysDays)) + " days"
+   @ 14, 4 SAY "Rental period: " + LTRIM(STR(M->nRentalDays)) + " days"
    @ 15, 4 SAY "Rate: $" + LTRIM(STR(M->nDailyRate, 6, 2)) + "/day"
    @ 16, 4 SAY "Late: $" + LTRIM(STR(M->nLateFeeDaily, 6, 2)) + "/day"
    @ 17, 4 SAY "Max rentals per customer: " + LTRIM(STR(M->nMaxRentals))
@@ -322,7 +320,7 @@ RETURN
 PROCEDURE RentMovie()
 
     LOCAL nMovieID
-    LOCAL nCLientID
+    LOCAL nClientID
     LOCAL GETLIST
     LOCAL cMovieName
     LOCAL cClientName
@@ -369,6 +367,14 @@ PROCEDURE RentMovie()
 
    M->cClientName := CUSTOMERS->Name 
    
+   * validate max rentals
+   IF SeekRentalsFrom(M->nCLientID) >= M->nMaxRentals
+      @ 22, 1 SAY "Customer already has " + LTRIM(STR(M->nMaxRentals)) + " rentals. Cannot rent more."
+      INKEY(0)
+      SELECT (nArea)
+      RETURN
+   ENDIF   
+
    * find movie
    CLEARSCREEN()
    GETLIST := {}
@@ -428,7 +434,7 @@ PROCEDURE RentMovie()
            MOVIES->RENTED_ON WITH DATE() 
 
    M->cMovieName := MOVIES->TITLE 
-   * @ 22, 1 SAY M->cMovieName + "has been rented'. Press any key."
+   * @ 22, 1 SAY M->cMovieName + " has been rented'. Press any key."
    INKEY(0)
 
 
@@ -449,6 +455,7 @@ PROCEDURE ReturnMovie()
     LOCAL GETLIST
     LOCAL cMovieName
     LOCAL nArea 
+    LOCAL nDaysRented
     
     GETLIST := {}
     nArea := SELECT()
@@ -504,18 +511,28 @@ PROCEDURE ReturnMovie()
    ENDIF
 
    * 3. The system calculates whether the return is late
-   * 4. If late: displays the fee owed (`days_overdue × daily_late_fee`). The operator reads this aloud — **the system does not record payment**
+   *   DAYS = DATE() - MOVIES->RENTED_ON
+   *   DAYS vs M->nMaxRentals
 
+   M->nDaysRented := Date() - MOVIES->RENTED_ON
+   M->cMovieName := MOVIES->TITLE 
+   
+   IF M->nDaysRented > M->nRentalDays
+      @ 22, 1 SAY M->cMovieName + " is late by " + LTRIM(STR((M->nDaysRented - M->nRentalDays))) + " days. Press any key."
+      INKEY(0)
+   ENDIF 
+
+
+   * 4. If late: displays the fee owed (`days_overdue × daily_late_fee`). 
+   *  Decide not to implenet the fees calculation.  Already proved what wanted to try. 
+   
    * 5. The movie is marked as available again. The rental is marked as closed.   
    REPLACE MOVIES->RENTED_TO WITH 0, ;
            MOVIES->RENTED_ON WITH CTOD("  /  /  ")
 
-   M->cMovieName := MOVIES->TITLE 
-   @ 22, 1 SAY M->cMovieName + "ha sido devuelta. Press any key."
+ 
+   @ 22, 1 SAY M->cMovieName + " has been returned. Press any key."
    INKEY(0)
-
-
-
 
 RETURN
 
@@ -574,13 +591,15 @@ PROCEDURE NewCustomer()
            CUSTOMERS->NAME WITH M->cName ;
 
 
-   @ 22, 1 SAY "Customer "+ ALLTRIM(M->cName) + "added. Member ID: " + LTRIM(STR(nNewId)) + "   "
+   @ 22, 1 SAY "Customer "+ ALLTRIM(M->cName) + " added. Member ID: " + LTRIM(STR(nNewId)) + "   "
    INKEY(0)
 
    SELECT (nArea)
 RETURN
 
-
+* ───────────────────────────────────────────────────────────────────────
+*  ### Seek and return the quantity of movies rented by a client 
+* ───────────────────────────────────────────────────────────────────────
 FUNCTION SeekRentalsFrom
   PARAMETERS nCustID
   
@@ -694,7 +713,7 @@ PROCEDURE AvailableMovies()
    SELECT MOVIES
    GO TOP
    DO WHILE .NOT. EOF()
-      IF EMPTY(MOVIES->RENTED_ON)
+      IF MOVIES->RENTED_TO == 0
          AADD(aList, {MOVIES->ID, ALLTRIM(MOVIES->TITLE)})
       ENDIF
       SKIP
@@ -777,7 +796,7 @@ PROCEDURE NewMovie()
    @ 7, 11 GET cTitle PICT "@S48"
    READ
 
-   * LASTKEY() == 27 significa que el usuario presionó Esc durante el GET
+   * LASTKEY() == 27 usr pressed ESC
    IF LASTKEY() == 27
       SELECT (nArea)
       RETURN
