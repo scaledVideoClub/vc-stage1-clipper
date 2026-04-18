@@ -562,15 +562,15 @@ PROCEDURE NewCustomer()
    @ 7, 11 GET M->cName PICT "@S48"
    READ
 
-   * LASTKEY() == 27 significa que el usuario presionó Esc durante el GET
+   * LASTKEY() == 27 user pressed Esc on  GET
    IF LASTKEY() == 27
       SELECT (nArea)
       RETURN
    ENDIF
 
-   cName := ALLTRIM(M->cName)
-
-   IF LEN(M->cName) = 0
+   M->cName := ALLTRIM(M->cName)
+   
+   IF LEN(M->cName) == 0
       @ 22, 1 SAY "This field cannot be empty. Press any key."
       INKEY(0)
       SELECT (nArea)
@@ -590,6 +590,7 @@ PROCEDURE NewCustomer()
    REPLACE CUSTOMERS->ID   WITH nNewId, ;
            CUSTOMERS->NAME WITH M->cName ;
 
+   REINDEX
 
    @ 22, 1 SAY "Customer "+ ALLTRIM(M->cName) + " added. Member ID: " + LTRIM(STR(nNewId)) + "   "
    INKEY(0)
@@ -825,6 +826,8 @@ PROCEDURE NewMovie()
            MOVIES->TITLE     WITH cTitle, ;
            MOVIES->RENTED_TO WITH 0, ;
            MOVIES->RENTED_ON WITH CTOD("  /  /  ")
+
+   REINDEX
 
    @ 22, 1 SAY "Movie added. Catalog ID: " + LTRIM(STR(nNewId)) + "   "
    INKEY(0)
