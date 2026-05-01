@@ -1,0 +1,52 @@
+STG 01 - TEST - CLIPPER - VIDEOCLUB
+
+TC-001 — Normal startup with valid config  > PASSED
+TC-002 — Startup with missing config file  > PASSED
+TC-003 — Startup with missing DATA directory or DBF files > PASSED
+
+TC-010 — Add a movie successfully > PASSED
+TC-011 — Add multiple movies, IDs auto-increment > PASSED
+TC-012 — Add movie with empty title > PASSED
+TC-013 — Cancel new movie > PASSED
+
+TC-020 — Register a customer successfully > PASSED
+TC-021 — Multiple customers, IDs auto-increment > PASSED
+TC-022 — Register customer with empty name > PASSED
+TC-023 — Cancel new customer  > PASSED  > warning: TC added on the fly, not in test plan.
+
+
+TC-030 — Rent a movie successfully > PASSED
+TC-031 — Rented movie no longer appears as available > PASSED
+TC-032 — Rent movie with invalid Movie ID > PASSED
+TC-033 — Rent movie that is already rented > PASSED
+
+TC-034 — Rent with invalid Customer ID > PASSED
+TC-035 — Rent cancelled with Esc > PASSED
+TC-036 — Customer reaches rental limit (MAX_RENTALS=3) > PASSED
+TC-037 — Customer at limit can rent after returning one > PASSED
+
+TC-040 — Return on time (same day, minimum fee) > PASSED
+TC-041 — Return with late fee > NOT PASSED
+	Error of 100 years...
+	Added SET CENTURY ON and some debig messages
+	Modified DB using TESTDATA.PRG instead of DBU to avois 26 = 1926
+	Final state: PASSED
+TC-042 — Return on exact due date (no late fee) > PASSED
+TC-043 — Return movie not found > PASSED
+TC-044 — Return movie that is not currently rented > PASSED
+TC-045 — Return cancelled with Esc > PASSED
+
+TC-050 — List with available movies > PASSED
+TC-051 — List with no available movies  > PASSED
+TC-052 — Pagination (more than 15 available movies)  > PASSED
+
+TC-060 — List with active rentals  > PASSED
+
+TC-061 — Active count updates after return  > PASSED
+TC-062 — Pagination (more than 15 customers)  > PASSED
+
+TC-070 — Movie state consistency after rent  > PASSED
+TC-071 — Movie state consistency after return   > PASSED
+TC-072 — MAX_RENTALS enforced across sessions  > PASSED
+
+TC-080 — Custom config values applied > PASSED

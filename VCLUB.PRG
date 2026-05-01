@@ -51,6 +51,8 @@ PROCEDURE MAIN
    SET CENTURY    OFF
    SET CONFIRM    OFF
    SET WRAP       OFF
+   SET EPOCH      TO 1980
+   SET CENTURY    ON 
 
    PUBLIC nRentalDaysDays, nDailyRate, nLateFeeDaily,nMaxRentals
 
@@ -517,6 +519,12 @@ PROCEDURE ReturnMovie()
    M->nDaysRented := Date() - MOVIES->RENTED_ON
    M->cMovieName := MOVIES->TITLE 
    
+   @ 20, 1 SAY M->cMovieName + " Today is " + DTOC(Date())
+   @ 21, 1 SAY M->cMovieName + " was rented on " + DTOC(MOVIES->RENTED_ON)
+   @ 22, 1 SAY M->cMovieName + " it was rented for  " + LTRIM(STR((M->nDaysRented))) + " days. Press any key."
+   
+   INKEY(0)
+
    IF M->nDaysRented > M->nRentalDays
       @ 22, 1 SAY M->cMovieName + " is late by " + LTRIM(STR((M->nDaysRented - M->nRentalDays))) + " days. Press any key."
       INKEY(0)
@@ -611,7 +619,7 @@ FUNCTION SeekRentalsFrom
   SELECT MOVIES
   GO TOP
   DO WHILE .NOT. EOF()
-     IF (MOVIES->RENTED_TO == nCustID)
+     IF (MOVIES->RENTED_TO == M->nCustID)
         nRentals := nRentals + 1
      ENDIF 
      SKIP 
@@ -805,7 +813,7 @@ PROCEDURE NewMovie()
 
    cTitle := ALLTRIM(cTitle)
 
-   IF LEN(cTitle) = 0
+   IF LEN(cTitle) == 0
       @ 22, 1 SAY "This field cannot be empty. Press any key."
       INKEY(0)
       SELECT (nArea)
