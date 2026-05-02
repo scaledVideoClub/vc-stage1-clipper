@@ -67,3 +67,32 @@ This is Stage 1 of 7. Concepts introduced here (and here only):
 - System configuration via `.CFG` file
 
 Nothing from Stage 2 or later appears in this codebase. Stage boundaries are enforced strictly.
+
+## Development Strategy
+
+This stage deliberately reflects late-1980s solo development practices.
+Do not apply modern tooling conventions here — that anachronism defeats the purpose.
+
+### Spec-Driven Development
+Basic functional spec written before coding: entities, flows, and business rules
+in plain prose. No formal template. Equivalent to a handwritten requirements note.
+Specs live in `/specs/` as a historical concession (version control didn't exist then).
+
+### Testing
+No test-first discipline. Manual testing at the end, against a written test case list.
+No test framework — Clipper 5.2 has none. Test cases are in `/specs/test_cases.md`
+and executed manually in DOSBox.
+
+### Code Review
+No formal CR process. This mirrors solo DOS-era development.
+Self-review only: read the code once before committing.
+
+### Version Control
+Git is used as a modern concession — no VCS existed in this era.
+All commits go directly to `main`. No branches, no PRs.
+`main` must always run. Commit only working states.
+
+### Docs & Jira
+Jira used loosely as a modern stand-in for a physical task list (cards on a board).
+No PR descriptions required beyond a one-line summary.
+`decisions.md` is the only mandatory living doc — written after the fact.
