@@ -36,8 +36,8 @@ All stage specifications live in `/specs/`:
 | File | Contents |
 |---|---|
 | [`docs/setup.md`](docs/setup.md) | How to set up DOSBox and compile the project |
-| [`docs/run.md`](docs/run.md) | How to run through all core flows |
-| [`docs/decisions.md`](docs/decisions.md) | Key architectural decisions and their rationale |
+| ~[`docs/run.md`](docs/run.md)~ | ~How to run through all core flows~ |
+| ~[`docs/decisions.md`](docs/decisions.md)~ | ~Key architectural decisions and their rationale~ |
 | [`docs/retrospective.md`](docs/retrospective.md) | Stage retrospective (filled after completion) |
 
 ---
